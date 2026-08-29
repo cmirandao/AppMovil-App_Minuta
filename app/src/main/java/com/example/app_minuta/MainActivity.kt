@@ -11,8 +11,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 
-import com.example.app_minuta.data.weeklyFoodMenu
-
 import com.example.app_minuta.ui.theme.App_MinutaTheme
 import com.example.app_minuta.ui.views.LoginView
 import com.example.app_minuta.ui.views.RegisterView
@@ -52,16 +50,33 @@ fun AppNavigation() {
         }
         "REGISTER" -> {
             RegisterView(
-                onRegisterSuccess = {
-                    actualView = "LOGIN"
-                }
+                onRegisterSuccess = { actualView = "LOGIN" },
+                onNavigateBack = { actualView = "LOGIN" }
             )
         }
         "RECOVERY" -> {
-            PassRecoveryView()
+            PassRecoveryView(
+                onNavigateBack = { actualView = "LOGIN" }
+            )
         }
         "FOODMENU" -> {
-            WeeklyFoodView(recetas = weeklyFoodMenu)
+            val currentUser = com.example.app_minuta.data.registeredUsers.find {
+                it.username == sessionUser
+            }
+
+            val userDiet = currentUser?.diet ?: "Normal"
+            val userName = currentUser?.name ?: "Invitado"
+
+            val filteredRecipes = com.example.app_minuta.data.weeklyFoodMenu.filter {
+                it.diet == userDiet
+            }
+
+            WeeklyFoodView(
+                recetas = filteredRecipes,
+                userName = userName,
+                userDiet = userDiet,
+                onNavigateBack = { actualView = "LOGIN" }
+            )
         }
     }
 }
