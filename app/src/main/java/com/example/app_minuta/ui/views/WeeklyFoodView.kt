@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.app_minuta.data.Recipe
@@ -22,6 +23,12 @@ fun WeeklyFoodView(
     onNavigateBack: () -> Unit
 ) {
     var expandedRecipeId by remember { mutableStateOf<Int?>(null) }
+    val configuration = LocalConfiguration.current
+    val gridColumns = if (configuration.screenWidthDp >= 600) {
+        GridCells.Fixed(2) // Pantallas anchas (Tablets o Landscape): 2 columnas
+    } else {
+        GridCells.Fixed(1) // Pantallas normales (Celulares en vertical): 1 columna
+    }
 
     Column(
         modifier = Modifier
@@ -52,7 +59,7 @@ fun WeeklyFoodView(
         }
 
         LazyVerticalGrid(
-            columns = GridCells.Adaptive(minSize = 300.dp),
+            columns = gridColumns,
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.fillMaxSize()

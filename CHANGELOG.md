@@ -1,6 +1,18 @@
 # Changelog
 Todos los cambios notables de la aplicación "Minuta Nutricional" serán documentados en este archivo.
 
+## [1.2.0] - 2026-09-03
+
+### Añadido
+- **Navigation Compose:** Implementación de navegación profesional mediante `NavHost` y `NavController`.
+- **Rutas Tipadas (Sealed Classes):** Creación de la jerarquía de clases `Screen` para definir rutas seguras, eliminando el uso de `Strings` duros propensos a errores y permitiendo el paso de argumentos (`username`).
+- **Nivel de Actividad Física:** Integración del atributo `activityLevel` al modelo `User`, capturándolo en el registro y almacenándolo en la colección.
+
+### Modificado
+- **Arquitectura POO (Repositorios):** Separación de la capa de datos y la capa visual. Se crearon las clases `UserRepository` y `RecipeRepository` para encapsular las colecciones (`private val`) y gestionar la lógica de negocio mediante métodos (`addUser`, `validateCredentials`, `getRecipesByDiet`).
+- **Grilla Adaptativa Dinámica:** Refactorización de `WeeklyFoodView` utilizando `LocalConfiguration.current` para calcular el ancho de la pantalla y variar automáticamente las columnas de `LazyVerticalGrid` (1 columna en vertical, 2 columnas en horizontal/tablets).
+- **Lógica de Estado:** Eliminación de la gestión manual de vistas (`actualView`) en favor del enrutador nativo de Jetpack Compose.
+
 ## [1.1.0] - 2026-08-29
 
 ### Arreglado

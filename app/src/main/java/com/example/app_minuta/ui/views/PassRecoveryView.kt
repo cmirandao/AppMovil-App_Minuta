@@ -6,7 +6,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.app_minuta.data.registeredUsers
+
+import com.example.app_minuta.data.userRepository
 
 @Composable
 fun PassRecoveryView(
@@ -43,10 +44,9 @@ fun PassRecoveryView(
                     isError = true
                     recoveryMessage = "Debes ingresar un usuario válido."
                 } else {
-                    // Validar si el usuario existe
-                    val userExists = registeredUsers.any { it.username == usernameInput }
+                    val exists = userRepository.userExists(usernameInput)
 
-                    if (userExists) {
+                    if (exists) {
                         isError = false
                         recoveryMessage = "Instrucciones enviadas con éxito."
                     } else {

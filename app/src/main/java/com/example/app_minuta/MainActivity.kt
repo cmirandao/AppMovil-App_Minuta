@@ -8,18 +8,36 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+
+import com.example.app_minuta.data.recipeRepository
+import com.example.app_minuta.data.userRepository
 import com.example.app_minuta.ui.theme.App_MinutaTheme
+
 import com.example.app_minuta.ui.views.LoginView
 import com.example.app_minuta.ui.views.RegisterView
-import com.example.app_minuta.ui.views.WeeklyFoodView
 import com.example.app_minuta.ui.views.PassRecoveryView
+import com.example.app_minuta.ui.views.WeeklyFoodView
+
+sealed class Screen(val route: String) {
+    object Login : Screen("login")
+    object Register : Screen("register")
+    object Recovery : Screen("recovery")
+    object FoodMenu : Screen("food_menu/{username}") {
+        fun createRoute(username: String) = "food_menu/$username"
+    }
+}
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Muestra toda la pantalla
         enableEdgeToEdge()
         setContent {
             App_MinutaTheme {
@@ -32,50 +50,58 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
 @Composable
 fun AppNavigation() {
-    var actualView by remember { mutableStateOf("LOGIN") }
-    var sessionUser by remember { mutableStateOf<String?>(null) }
+    val navController = rememberNavController()
 
-    when (actualView) {
-        "LOGIN" -> {
+    NavHost(navController = navController, startDestination = Screen.Login.route) {
+
+        // Ruta de Login
+        composable(Screen.Login.route) {
             LoginView(
-                onLoginClick = { user ->
-                    sessionUser = user
-                    actualView = "FOODMENU"
+                onLoginClick = { username ->
+                    navController.navigate(Screen.FoodMenu.createRoute(username)) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
                 },
-                onRegisterClick = { actualView = "REGISTER" },
-                onRecoverClick = { actualView = "RECOVERY" }
+                onRegisterClick = { navController.navigate(Screen.Register.route) },
+                onRecoverClick = { navController.navigate(Screen.Recovery.route) }
             )
         }
-        "REGISTER" -> {
-            RegisterView(
-                onRegisterSuccess = { actualView = "LOGIN" },
-                onNavigateBack = { actualView = "LOGIN" }
-            )
-        }
-        "RECOVERY" -> {
-            PassRecoveryView(
-                onNavigateBack = { actualView = "LOGIN" }
-            )
-        }
-        "FOODMENU" -> {
-            val currentUser = com.example.app_minuta.data.registeredUsers.find {
-                it.username == sessionUser
-            }
 
+        composable(Screen.Register.route) {
+            RegisterView(
+                onRegisterSuccess = { navController.navigateUp() },
+                onNavigateBack = { navController.navigateUp() }
+            )
+        }
+
+        composable(Screen.Recovery.route) {
+            PassRecoveryView(
+                onNavigateBack = { navController.navigateUp() }
+            )
+        }
+
+        composable(
+            route = Screen.FoodMenu.route,
+            arguments = listOf(navArgument("username") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val username = backStackEntry.arguments?.getString("username")
+            val currentUser = userRepository.findUser(username)
             val userDiet = currentUser?.diet ?: "Normal"
             val userName = currentUser?.name ?: "Invitado"
-
-            val filteredRecipes = com.example.app_minuta.data.weeklyFoodMenu.filter {
-                it.diet == userDiet
-            }
+            val filteredRecipes = recipeRepository.getRecipesByDiet(userDiet)
 
             WeeklyFoodView(
                 recetas = filteredRecipes,
                 userName = userName,
                 userDiet = userDiet,
-                onNavigateBack = { actualView = "LOGIN" }
+                onNavigateBack = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0)
+                    }
+                }
             )
         }
     }

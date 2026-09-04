@@ -16,7 +16,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 
 import com.example.app_minuta.data.User
-import com.example.app_minuta.data.registeredUsers
+import com.example.app_minuta.data.userRepository
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,11 +28,8 @@ fun RegisterView(
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
-
-    // Estados para controlar la visibilidad de las contraseñas
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
-
     var disclaimer by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
 
@@ -111,7 +108,7 @@ fun RegisterView(
                 }
             }
         }
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         ExposedDropdownMenuBox(
             expanded = expanded,
@@ -163,9 +160,8 @@ fun RegisterView(
             onClick = {
                 when {
                     name.isBlank() || username.isBlank() || password.isBlank() -> {
-                        errorMessage = "Todos los campos de texto son obligatorios."
+                        errorMessage = "Todos los campos son obligatorios."
                     }
-                    // Validaciones
                     password.length < 6 || !password.any { it.isUpperCase() } || !password.any { it.isLowerCase() } || !password.any { it.isDigit() } -> {
                         errorMessage = "La contraseña debe tener mín. 6 caracteres, una mayúscula, una minúscula y un número."
                     }
@@ -175,15 +171,16 @@ fun RegisterView(
                     !disclaimer -> {
                         errorMessage = "Debes aceptar los términos y condiciones."
                     }
-                    registeredUsers.size >= 5 -> {
+                    userRepository.isFull() -> {
                         errorMessage = "No se permiten más registros (límite de 5 alcanzado)."
                     }
-                    registeredUsers.any { it.username == username } -> {
+                    userRepository.userExists(username) -> {
                         errorMessage = "El nombre de usuario ya se encuentra registrado."
                     }
                     else -> {
                         errorMessage = ""
-                        registeredUsers.add(User(name, username, password, selectedDiet))
+                        val newUser = User(name, username, password, selectedDiet, selectedActivity)
+                        userRepository.addUser(newUser)
                         onRegisterSuccess()
                     }
                 }

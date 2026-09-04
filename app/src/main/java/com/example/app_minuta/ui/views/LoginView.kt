@@ -14,7 +14,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 
-import com.example.app_minuta.data.registeredUsers
+import com.example.app_minuta.data.userRepository
 
 @Composable
 fun LoginView(
@@ -71,9 +71,7 @@ fun LoginView(
                 if (user.isBlank() || password.isBlank()) {
                     errorMessage = "Debes ingresar usuario y contraseña."
                 } else {
-                    val validUser = registeredUsers.any {
-                        it.username == user && it.pass == password
-                    }
+                    val validUser = userRepository.validateCredentials(user, password)
 
                     if (validUser) {
                         errorMessage = ""
