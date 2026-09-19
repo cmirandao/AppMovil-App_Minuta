@@ -11,6 +11,10 @@ data class User(
 class UserRepository {
     private val registeredUsers = mutableListOf<User>()
 
+    fun getUser(username: String): User? {
+        return registeredUsers.filterNotNull().find { it.username == username }
+    }
+
     fun addUser(user: User): Boolean {
         if (registeredUsers.size < 5 && !userExists(user.username)) {
             registeredUsers.add(user)

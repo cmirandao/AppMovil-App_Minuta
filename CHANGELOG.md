@@ -1,6 +1,18 @@
 # Changelog
 Todos los cambios notables de la aplicación "Minuta Nutricional" serán documentados en este archivo.
 
+## [2.0.0] - 2026-09-18
+
+### Añadido
+- **Extensiones KTX (Palette):** Integración de la librería `androidx.palette:palette-ktx` en la nueva `RecetaView` para extraer los colores dominantes y vibrantes de la imagen del plato, aplicándolos dinámicamente a la UI (Palette Texts y Palette Widgets).
+- **Vistas Independientes:** Creación de una vista dedicada para el detalle de la receta (`RecetaView`), separando la lógica del listado y mejorando el enfoque en la lectura.
+
+### Modificado
+- **Estructura Estricta de Datos:** Refactorización de la colección de recetas en `RecipeRepository`. Se reemplazó `List` por un `Array<Recipe>` de tamaño fijo (`arrayOf`), dando cumplimiento literal al requerimiento de la estructura de datos.
+- **Usabilidad y Accesibilidad:** Transformación de `WeeklyFoodView` en un "HomeMenú" limpio tipo índice. Se hizo explícita la relación "Día de la semana -> Receta" en cada tarjeta y se agregaron botones de acción directa ("Ver Receta") para facilitar el uso a personas de baja habilidad informática.
+- **Limpieza del Back Stack:** Optimización del enrutador (`NavHost`) implementando `popUpTo` en la transición de Login a HomeMenú, y al Cerrar Sesión, evitando retornos erróneos en el historial de navegación.
+- **Refinamiento de UI y Contenido:** Alineación adaptativa de botones en las tarjetas de la minuta y redacción completa de las 15 recetas (ingredientes, instrucciones y nutrición) para su correcta visualización en la nueva vista detallada.
+
 ## [1.2.0] - 2026-09-03
 
 ### Añadido

@@ -1,13 +1,12 @@
 package com.example.app_minuta.ui.views
 
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -17,17 +16,17 @@ import com.example.app_minuta.data.Recipe
 
 @Composable
 fun WeeklyFoodView(
-    recetas: List<Recipe>,
+    recetas: Array<Recipe>,
     userName: String,
     userDiet: String,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onRecipeClick: (Int) -> Unit
 ) {
-    var expandedRecipeId by remember { mutableStateOf<Int?>(null) }
     val configuration = LocalConfiguration.current
     val gridColumns = if (configuration.screenWidthDp >= 600) {
-        GridCells.Fixed(2) // Pantallas anchas (Tablets o Landscape): 2 columnas
+        GridCells.Fixed(2)
     } else {
-        GridCells.Fixed(1) // Pantallas normales (Celulares en vertical): 1 columna
+        GridCells.Fixed(1)
     }
 
     Column(
@@ -45,7 +44,8 @@ fun WeeklyFoodView(
             Column {
                 Text(
                     text = "Minuta Semanal",
-                    style = MaterialTheme.typography.headlineMedium
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = "Usuario: $userName\nDieta: $userDiet",
@@ -54,7 +54,7 @@ fun WeeklyFoodView(
                 )
             }
             OutlinedButton(onClick = onNavigateBack) {
-                Text("Volver")
+                Text("Cerrar Sesión")
             }
         }
 
@@ -64,46 +64,35 @@ fun WeeklyFoodView(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.fillMaxSize()
         ) {
-            items(recetas) { receta ->
-                val isExpanded = expandedRecipeId == receta.id
-
+            items(recetas.toList()) { receta ->
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable {
-                            expandedRecipeId = if (isExpanded) null else receta.id
-                        }
-                        .animateContentSize(),
+                        .clickable { onRecipeClick(receta.id) },
                     elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
+                    Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                        // Relación Día -> Receta explícita
+                        Text(
+                            text = receta.dayOfWeek,
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = receta.name,
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.titleLarge
                         )
 
-                        if (isExpanded) {
-                            Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
 
-                            Text("Ingredientes:", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyLarge)
-                            Text(text = receta.ingredients, style = MaterialTheme.typography.bodyMedium)
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            Text("Preparación:", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyLarge)
-                            Text(text = receta.instructions, style = MaterialTheme.typography.bodyMedium)
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            Text("Aporte Nutricional (por porción):", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyLarge)
-                            Text(text = receta.nutritionFact, style = MaterialTheme.typography.bodyMedium)
-                        } else {
-                            Text(
-                                text = "Toca para ver la receta...",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(top = 8.dp)
-                            )
+                        Button(
+                            onClick = { onRecipeClick(receta.id) },
+                            modifier = Modifier.align(Alignment.End)
+                        ) {
+                            Text("Ver Receta")
                         }
                     }
                 }
