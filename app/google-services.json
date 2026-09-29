@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "247669998180",
+    "firebase_url": "https://app-minuta-2b176-default-rtdb.firebaseio.com",
+    "project_id": "app-minuta-2b176",
+    "storage_bucket": "app-minuta-2b176.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:247669998180:android:0e0dfbc91a05ad23819571",
+        "android_client_info": {
+          "package_name": "com.example.app_minuta"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBo22yYTE6m4UoMRPvUAf9cGJSeZdbfQTc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

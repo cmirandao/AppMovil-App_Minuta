@@ -101,13 +101,14 @@ fun AppNavigation() {
             val username = backStackEntry.arguments?.getString("username") ?: ""
             val currentUser = userRepository.getUser(username)
             val userDiet = currentUser?.diet ?: "Normal"
-            val userName = currentUser?.name ?: "Invitado"
+            val userName = currentUser?.name ?: username
             val filteredRecipes = recipeRepository.getRecipesByDiet(userDiet)
 
             WeeklyFoodView(
                 recetas = filteredRecipes,
                 userName = userName,
                 userDiet = userDiet,
+                usernameAccount = username,
                 onNavigateBack = {
                     navController.navigate(Screen.Login.route) { popUpTo(0) }
                 },

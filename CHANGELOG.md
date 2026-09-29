@@ -1,6 +1,25 @@
 # Changelog
 Todos los cambios notables de la aplicación "Minuta Nutricional" serán documentados en este archivo.
 
+## [3.0.0] - 2026-09-28
+
+### Añadido
+- **Integración de Google Firebase (Back End):** Incorporación de `firebase-bom`, `firebase-auth` y `firebase-database` mediante el plugin `google-services` y el archivo de configuración `google-services.json` para habilitar la persistencia de datos en la nube.
+- **Autenticación con Firebase Auth:** Implementación de registro e inicio de sesión asíncrono con `FirebaseAuth` (`createUserWithEmailAndPassword` y `signInWithEmailAndPassword`), junto con soporte para restablecimiento de contraseña.
+- **Persistencia en Tiempo Real (Realtime Database):** Conexión de `UserRepository` y `RecipeRepository` a los nodos `"users"` y `"recipes"` en Firebase Realtime Database utilizando `ValueEventListener` para sincronización en tiempo real.
+- **Operaciones CRUD Completas:**
+  - *Create:* Registro de nuevos usuarios en Auth/Database y poblado inicial automático (`seed`) de las 15 recetas en la nube.
+  - *Read:* Lectura reactiva de perfiles de usuario y filtrado de recetas por tipo de dieta desde Firebase con respaldo en `Array<Recipe>`.
+  - *Update:* Selector interactivo (`FilterChip`) en `WeeklyFoodView` para actualizar el tipo de dieta del usuario en tiempo real, además de actualización de credenciales en `PassRecoveryView`.
+  - *Delete:* Opción para eliminar la cuenta del usuario con diálogo de confirmación en `WeeklyFoodView`, removiendo el registro en Realtime Database y cerrando la sesión activa.
+
+### Modificado
+- **Modelos de Datos (`User` y `Recipe`):** Adición de valores por defecto en las propiedades de las `data class` para permitir la deserialización automática de objetos JSON desde Firebase Realtime Database.
+- **Vistas de Autenticación (`LoginView`, `RegisterView`, `PassRecoveryView`):** Integración de estados de carga (`CircularProgressIndicator`) y respuestas asíncronas de Firebase, conservando los controles de visualización de contraseña (`Visibility`/`VisibilityOff`), confirmación de clave y validación de complejidad (mínimo 6 caracteres, mayúscula, minúscula y número).
+
+### Corregido
+- **Limpieza de Código en `RecetaView`:** Eliminación de importaciones no utilizadas (`BitmapFactory` y `painterResource`) señaladas en la retroalimentación de la Semana 6, asegurando la correcta vinculación del recurso gráfico `R.drawable.plato_comida`.
+
 ## [2.0.0] - 2026-09-18
 
 ### Añadido

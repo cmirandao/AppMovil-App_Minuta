@@ -1,16 +1,27 @@
 package com.example.app_minuta.data
 
+import android.util.Log
+import com.google.firebase.Firebase
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.database
+
+// Valores por defecto requeridos por Firebase Realtime Database para deserializar JSON
 data class Recipe(
-    val id: Int,
-    val dayOfWeek: String,
-    val name: String,
-    val ingredients: String,
-    val instructions: String,
-    val nutritionFact: String,
-    val diet: String
+    val id: Int = 0,
+    val dayOfWeek: String = "",
+    val name: String = "",
+    val ingredients: String = "",
+    val instructions: String = "",
+    val nutritionFact: String = "",
+    val diet: String = ""
 )
 
 class RecipeRepository {
+    private val database: DatabaseReference = Firebase.database.getReference("recipes")
+
     private val weeklyFoodMenu: Array<Recipe> = arrayOf(
         // ==========================================
         // DIETA NORMAL
@@ -136,7 +147,7 @@ class RecipeRepository {
             dayOfWeek = "Miércoles",
             name = "Tacos en lechuga",
             ingredients = "• 150g de carne molida magra\n• 4 hojas de lechuga costina grandes e intactas\n• 1/2 tomate picado\n• 1/2 palta molida\n• Comino, sal y ají color",
-            instructions = "1. Sofrie la carne molida aliñada con comino, sal y ají color hasta que esté bien cocida.\n2. Lava y seca muy bien las hojas de lechuga.\n3. Utiliza las hojas de lechuga como si fueran tortillas de taco.\n4. Rellena cada hoja con la carne caliente, el tomate fresco y la palta.",
+            instructions = "1. Sofríe la carne molida aliñada con comino, sal y ají color hasta que esté bien cocida.\n2. Lava y seca muy bien las hojas de lechuga.\n3. Utiliza las hojas de lechuga como si fueran tortillas de taco.\n4. Rellena cada hoja con la carne caliente, el tomate fresco y la palta.",
             nutritionFact = "Calorías: ~290 kcal\nProteínas: 25g\nCarbohidratos: 12g",
             diet = "Sin Gluten"
         ),
@@ -160,12 +171,55 @@ class RecipeRepository {
         )
     )
 
-    fun getRecipeById(id: Int): Recipe? {
-        return weeklyFoodMenu.find { it.id == id }
+    private val firebaseRecipes = mutableListOf<Recipe>()
+
+    init {
+        database.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                if (!snapshot.exists()) {
+                    // Si la base de datos en Firebase está vacía, subimos las 15 recetas iniciales automáticamente
+                    seedRecipesToFirebase()
+                } else {
+                    firebaseRecipes.clear()
+                    for (child in snapshot.children) {
+                        val recipe = child.getValue(Recipe::class.java)
+                        if (recipe != null) {
+                            firebaseRecipes.add(recipe)
+                        }
+                    }
+                    Log.d("FirebaseRecipes", "Recetas sincronizadas desde Firebase: ${firebaseRecipes.size}")
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.w("FirebaseRecipes", "Error al leer recetas desde Firebase", error.toException())
+            }
+        })
     }
 
+    // CREATE
+    private fun seedRecipesToFirebase() {
+        weeklyFoodMenu.forEach { recipe ->
+            database.child(recipe.id.toString()).setValue(recipe)
+        }
+    }
+
+    // UPDATE
+    fun updateRecipe(recipe: Recipe, onResult: (Boolean) -> Unit = {}) {
+        database.child(recipe.id.toString()).setValue(recipe)
+            .addOnSuccessListener { onResult(true) }
+            .addOnFailureListener { onResult(false) }
+    }
+
+    // READ: Obtiene una receta por ID (desde Firebase si ya sincronizó, o del Array local como respaldo)
+    fun getRecipeById(id: Int): Recipe? {
+        return firebaseRecipes.find { it.id == id } ?: weeklyFoodMenu.find { it.id == id }
+    }
+
+    // READ: Filtra por dieta
     fun getRecipesByDiet(diet: String): Array<Recipe> {
-        return weeklyFoodMenu.filter { it.diet == diet }.toTypedArray()
+        val source = if (firebaseRecipes.isNotEmpty()) firebaseRecipes.toTypedArray() else weeklyFoodMenu
+        return source.filter { it.diet == diet }.toTypedArray()
     }
 }
 

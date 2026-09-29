@@ -1,8 +1,8 @@
 package com.example.app_minuta.ui.views
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
@@ -11,10 +11,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-
 import com.example.app_minuta.data.User
 import com.example.app_minuta.data.userRepository
 
@@ -24,36 +24,46 @@ fun RegisterView(
     onRegisterSuccess: () -> Unit,
     onNavigateBack: () -> Unit
 ) {
+    val context = LocalContext.current
+
     var name by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+
+    // Estados para visualizar u ocultar las contraseñas
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
-    var disclaimer by remember { mutableStateOf(false) }
+
+    var selectedDiet by remember { mutableStateOf("Normal") }
+    var selectedActivityLevel by remember { mutableStateOf("Moderado") }
+
+    var dietExpanded by remember { mutableStateOf(false) }
+    var activityExpanded by remember { mutableStateOf(false) }
+
     var errorMessage by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
 
     val dietOptions = listOf("Normal", "Vegetariana", "Sin Gluten")
-    var selectedDiet by remember { mutableStateOf(dietOptions[0]) }
-
-    val activityLevels = listOf("Sedentario", "Ligero", "Moderado", "Intenso")
-    var expanded by remember { mutableStateOf(false) }
-    var selectedActivity by remember { mutableStateOf(activityLevels[0]) }
+    val activityOptions = listOf("Sedentario", "Ligero", "Moderado", "Intenso")
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
-        Text("Crear Cuenta", style = MaterialTheme.typography.headlineMedium)
-        Spacer(modifier = Modifier.height(16.dp))
+        Text("Registro de Usuario", style = MaterialTheme.typography.headlineMedium)
+        Spacer(modifier = Modifier.height(24.dp))
 
         OutlinedTextField(
             value = name,
             onValueChange = { name = it },
-            label = { Text("Nombre completo") },
+            label = { Text("Nombre Completo") },
+            enabled = !isLoading,
+            singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
@@ -62,10 +72,13 @@ fun RegisterView(
             value = username,
             onValueChange = { username = it },
             label = { Text("Nombre de usuario") },
+            enabled = !isLoading,
+            singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
 
+        // Campo de Contraseña con botón para visualizar/ocultar
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
@@ -73,14 +86,18 @@ fun RegisterView(
             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             trailingIcon = {
                 val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                val description = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Icon(imageVector = image, contentDescription = "Alternar visibilidad")
+                    Icon(imageVector = image, contentDescription = description)
                 }
             },
+            enabled = !isLoading,
+            singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
 
+        // Campo de Confirmar Contraseña con botón para visualizar/ocultar
         OutlinedTextField(
             value = confirmPassword,
             onValueChange = { confirmPassword = it },
@@ -88,111 +105,139 @@ fun RegisterView(
             visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             trailingIcon = {
                 val image = if (confirmPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                val description = if (confirmPasswordVisible) "Ocultar contraseña" else "Mostrar contraseña"
                 IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
-                    Icon(imageVector = image, contentDescription = "Alternar visibilidad")
+                    Icon(imageVector = image, contentDescription = description)
                 }
             },
+            enabled = !isLoading,
+            singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
-        Text("Preferencia de dieta:", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.align(Alignment.Start))
-        Column(Modifier.selectableGroup().fillMaxWidth()) {
-            dietOptions.forEach { diet ->
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    RadioButton(
-                        selected = (diet == selectedDiet),
-                        onClick = { selectedDiet = diet }
-                    )
-                    Text(text = diet)
-                }
-            }
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-
+        // Selector de Preferencia de dieta
         ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { expanded = !expanded },
-            modifier = Modifier.fillMaxWidth()
+            expanded = dietExpanded,
+            onExpandedChange = { if (!isLoading) dietExpanded = !dietExpanded }
         ) {
             OutlinedTextField(
-                value = selectedActivity,
+                value = selectedDiet,
                 onValueChange = {},
                 readOnly = true,
-                label = { Text("Nivel de actividad física") },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                label = { Text("Preferencia de dieta") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = dietExpanded) },
                 modifier = Modifier
-                    .menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                    .menuAnchor()
                     .fillMaxWidth()
             )
             ExposedDropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
+                expanded = dietExpanded,
+                onDismissRequest = { dietExpanded = false }
             ) {
-                activityLevels.forEach { level ->
+                dietOptions.forEach { diet ->
                     DropdownMenuItem(
-                        text = { Text(level) },
+                        text = { Text(diet) },
                         onClick = {
-                            selectedActivity = level
-                            expanded = false
+                            selectedDiet = diet
+                            dietExpanded = false
                         }
                     )
                 }
             }
         }
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-            Checkbox(
-                checked = disclaimer,
-                onCheckedChange = { disclaimer = it }
+        // Selector de Nivel de Actividad Física
+        ExposedDropdownMenuBox(
+            expanded = activityExpanded,
+            onExpandedChange = { if (!isLoading) activityExpanded = !activityExpanded }
+        ) {
+            OutlinedTextField(
+                value = selectedActivityLevel,
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Nivel de Actividad Física") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = activityExpanded) },
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth()
             )
-            Text("Acepto los términos y condiciones")
+            ExposedDropdownMenu(
+                expanded = activityExpanded,
+                onDismissRequest = { activityExpanded = false }
+            ) {
+                activityOptions.forEach { level ->
+                    DropdownMenuItem(
+                        text = { Text(level) },
+                        onClick = {
+                            selectedActivityLevel = level
+                            activityExpanded = false
+                        }
+                    )
+                }
+            }
         }
-        Spacer(modifier = Modifier.height(8.dp))
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         if (errorMessage.isNotEmpty()) {
             Text(text = errorMessage, color = MaterialTheme.colorScheme.error)
             Spacer(modifier = Modifier.height(8.dp))
         }
 
-        Button(
-            onClick = {
-                when {
-                    name.isBlank() || username.isBlank() || password.isBlank() -> {
-                        errorMessage = "Todos los campos son obligatorios."
+        if (isLoading) {
+            CircularProgressIndicator(modifier = Modifier.padding(8.dp))
+        } else {
+            Button(
+                onClick = {
+                    when {
+                        name.isBlank() || username.isBlank() || password.isBlank() || confirmPassword.isBlank() -> {
+                            errorMessage = "Por favor, completa todos los campos."
+                        }
+                        userRepository.isFull() -> {
+                            errorMessage = "Se ha alcanzado el límite máximo de usuarios registrados (5)."
+                        }
+                        userRepository.userExists(username.trim()) -> {
+                            errorMessage = "El nombre de usuario ya está en uso."
+                        }
+                        password.length < 6 || !password.any { it.isUpperCase() } || !password.any { it.isLowerCase() } || !password.any { it.isDigit() } -> {
+                            errorMessage = "La contraseña debe tener mín. 6 caracteres, una mayúscula, una minúscula y un número."
+                        }
+                        password != confirmPassword -> {
+                            errorMessage = "Las contraseñas no coinciden."
+                        }
+                        else -> {
+                            isLoading = true
+                            errorMessage = ""
+                            val newUser = User(
+                                name = name.trim(),
+                                username = username.trim(),
+                                pass = password,
+                                diet = selectedDiet,
+                                activityLevel = selectedActivityLevel
+                            )
+                            userRepository.registerUserWithFirebase(newUser) { success, message ->
+                                isLoading = false
+                                if (success) {
+                                    Toast.makeText(context, "Usuario registrado con éxito", Toast.LENGTH_SHORT).show()
+                                    onRegisterSuccess()
+                                } else {
+                                    errorMessage = message
+                                }
+                            }
+                        }
                     }
-                    password.length < 6 || !password.any { it.isUpperCase() } || !password.any { it.isLowerCase() } || !password.any { it.isDigit() } -> {
-                        errorMessage = "La contraseña debe tener mín. 6 caracteres, una mayúscula, una minúscula y un número."
-                    }
-                    password != confirmPassword -> {
-                        errorMessage = "Las contraseñas no coinciden."
-                    }
-                    !disclaimer -> {
-                        errorMessage = "Debes aceptar los términos y condiciones."
-                    }
-                    userRepository.isFull() -> {
-                        errorMessage = "No se permiten más registros (límite de 5 alcanzado)."
-                    }
-                    userRepository.userExists(username) -> {
-                        errorMessage = "El nombre de usuario ya se encuentra registrado."
-                    }
-                    else -> {
-                        errorMessage = ""
-                        val newUser = User(name, username, password, selectedDiet, selectedActivity)
-                        userRepository.addUser(newUser)
-                        onRegisterSuccess()
-                    }
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Registrarme")
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Registrar")
+            }
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        OutlinedButton(onClick = onNavigateBack, modifier = Modifier.fillMaxWidth()) {
+        TextButton(onClick = onNavigateBack, enabled = !isLoading) {
             Text("Volver al Login")
         }
     }
